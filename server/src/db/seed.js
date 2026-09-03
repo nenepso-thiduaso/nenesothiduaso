@@ -24,7 +24,7 @@ const CRITERIA = [
   ['Thành tích cấp trường','plus',5,'Khuyến khích',null],
 ];
 
-async function main(){
+async function run(){
   const client = await pool.connect();
   try{
     await client.query('BEGIN');
@@ -60,15 +60,20 @@ async function main(){
     );
 
     await client.query('COMMIT');
-    console.log('Seed xong. Tài khoản đầu tiên: admin /', defaultPassword);
-    console.log('=> Hãy đăng nhập và đổi mật khẩu này ngay lập tức.');
+    console.log('[seed] Xong. Nếu là lần đầu: tài khoản admin /', defaultPassword, '(hãy đổi ngay sau khi đăng nhập)');
   }catch(e){
     await client.query('ROLLBACK');
-    console.error('Seed lỗi:', e);
-    process.exitCode = 1;
+    console.error('[seed] Lỗi:', e);
+    throw e;
   }finally{
     client.release();
-    await pool.end();
   }
 }
-main();
+
+// Chỉ tự chạy + đóng pool khi gọi trực tiếp "node src/db/seed.js".
+// Khi được require() từ index.js lúc khởi động server, KHÔNG đóng pool.
+if (require.main === module) {
+  run().then(() => pool.end()).catch(() => { process.exitCode = 1; pool.end(); });
+}
+
+module.exports = { run };

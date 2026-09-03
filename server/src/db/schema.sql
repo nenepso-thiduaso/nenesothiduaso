@@ -42,9 +42,11 @@ CREATE TABLE IF NOT EXISTS users (
   updated_at      TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
-ALTER TABLE classes
-  ADD CONSTRAINT fk_classes_homeroom
-  FOREIGN KEY (homeroom_teacher_id) REFERENCES users(id) ON DELETE SET NULL;
+DO $$ BEGIN
+  ALTER TABLE classes
+    ADD CONSTRAINT fk_classes_homeroom
+    FOREIGN KEY (homeroom_teacher_id) REFERENCES users(id) ON DELETE SET NULL;
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
 -- ---------- BẢNG HỌC SINH ----------
 CREATE TABLE IF NOT EXISTS students (

@@ -42,4 +42,21 @@ app.use((err, req, res, next) => {
 });
 
 const PORT = process.env.PORT || 4000;
-app.listen(PORT, () => console.log(`Server đang chạy tại cổng ${PORT}`));
+
+// Tự động tạo bảng + dữ liệu khởi tạo (nếu chưa có) mỗi khi server khởi động.
+// Nhờ vậy KHÔNG cần vào Shell gõ lệnh tay — kể cả trên gói miễn phí của Render
+// (gói miễn phí không hỗ trợ Shell). An toàn khi chạy lại nhiều lần vì migrate
+// dùng "CREATE TABLE IF NOT EXISTS" và seed dùng "ON CONFLICT DO NOTHING".
+async function startup() {
+  try {
+    await require('./db/migrate').run();
+    await require('./db/seed').run();
+    console.log('[startup] Đã kiểm tra/khởi tạo xong bảng và dữ liệu mặc định.');
+  } catch (e) {
+    console.error('[startup] Lỗi khi tự khởi tạo database (server vẫn sẽ chạy tiếp):', e);
+  }
+}
+
+startup().then(() => {
+  app.listen(PORT, () => console.log(`Server đang chạy tại cổng ${PORT}`));
+});
